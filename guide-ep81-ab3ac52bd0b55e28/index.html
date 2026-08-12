@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第81回 ハービー・ハンコックの不思議なコード（オーギュメンテッド5） — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.9.8（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.9.10（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=huG0zgTE6KI(1042s) / 有料=vimeo 1115649817(2326s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -358,7 +358,7 @@ a.toc-row.nowplay.nowplay-paid::after{color:var(--paidfg);}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第81回）/ v0.9.8 生成 2026-08-11</p>
+Mubo 会員ガイド（第81回）/ v0.9.10 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "huG0zgTE6KI", "vimeo": "1115649817", "vimeoH": "bcfcfac4e7", "chFree": [0, 79, 131, 222, 572, 685, 873], "chPaid": [0, 267, 550, 730, 788, 1030, 1589, 1886, 2046]};</script>
 <script>
@@ -369,7 +369,7 @@ Mubo 会員ガイド（第81回）/ v0.9.8 生成 2026-08-11</p>
   function srcFor(ver, t){
     t = Math.max(0, Math.floor(t || 0));
     if (ver === 'free'){
-      return 'https://www.youtube.com/embed/' + cfg.yt + '?start=' + t + '&autoplay=1&rel=0&enablejsapi=1';
+      return 'https://www.youtube.com/embed/' + cfg.yt + '?start=' + t + '&autoplay=1&rel=0&enablejsapi=1&playsinline=1&origin=' + encodeURIComponent(location.origin);
     }
     return 'https://player.vimeo.com/video/' + cfg.vimeo + '?h=' + cfg.vimeoH + '&autoplay=1#t=' + t + 's';
   }
@@ -383,6 +383,16 @@ Mubo 会員ガイド（第81回）/ v0.9.8 生成 2026-08-11</p>
       // Vimeoは#t=だけ変えても再読込されないため、プレイヤーへ直接シーク命令を送る
       frame.contentWindow.postMessage(JSON.stringify({method:'setCurrentTime', value:t}), 'https://player.vimeo.com');
       frame.contentWindow.postMessage(JSON.stringify({method:'play'}), 'https://player.vimeo.com');
+    } else if (ver === current && ver === 'free'){
+      // v0.9.9: YouTubeも**再読込せず**シーク命令を送る（HASHIRA報告: スマホで頭出しのたびに再生が止まる）。
+      // 原因=src差し替えはiframeを読み込み直すため、モバイルの自動再生ポリシーで autoplay=1 が無効化される
+      //（ユーザー操作の文脈が新しいドキュメントに引き継がれない）。IFrame APIの seekTo なら同じ
+      // プレイヤーが動き続けるので、一度再生した後は操作の文脈が保たれて止まらない。Vimeo側と同じ型。
+      subscribeYT();  // 受信登録を送り直してからコマンドを出す（登録が切れていると無視されるため）
+      frame.contentWindow.postMessage(JSON.stringify(
+        {event:'command', func:'seekTo', args:[t, true]}), 'https://www.youtube.com');
+      frame.contentWindow.postMessage(JSON.stringify(
+        {event:'command', func:'playVideo', args:[]}), 'https://www.youtube.com');
     } else {
       frame.src = srcFor(ver, t);
       current = ver;
@@ -446,6 +456,7 @@ Mubo 会員ガイド（第81回）/ v0.9.8 生成 2026-08-11</p>
       }
     }
   });
+  // seek() からも呼ぶ（関数宣言なので巻き上げされ、定義位置より前から呼べる）
   function subscribeYT(){
     try {
       frame.contentWindow.postMessage(JSON.stringify({event:'listening', id:'guide', channel:'widget'}),
@@ -469,7 +480,7 @@ Mubo 会員ガイド（第81回）/ v0.9.8 生成 2026-08-11</p>
   });
 
   // 初期表示: 無料版（自動再生なし）
-  frame.src = 'https://www.youtube.com/embed/' + cfg.yt + '?rel=0&enablejsapi=1';
+  frame.src = 'https://www.youtube.com/embed/' + cfg.yt + '?rel=0&enablejsapi=1&playsinline=1&origin=' + encodeURIComponent(location.origin);
   current = 'free';
   activate('free');
 })();
