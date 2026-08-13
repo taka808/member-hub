@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第75回 ミックスの歴史 — おすすめエンジニア8選と新曲のミックス考察 — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.8（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.9（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=xlurBwtyQS4(1061s) / 有料=vimeo 998503690(2206s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -396,7 +396,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第75回）/ v0.10.8 生成 2026-08-11</p>
+Mubo 会員ガイド（第75回）/ v0.10.9 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "xlurBwtyQS4", "vimeo": "998503690", "vimeoH": "5515cb8b17", "chFree": [0, 130, 195, 301, 331, 395, 408, 773, 808, 865, 919], "chPaid": [0, 69, 360, 584, 881, 1321, 1415, 1660, 2071, 2160]};</script>
 <script>
@@ -453,6 +453,9 @@ Mubo 会員ガイド（第75回）/ v0.10.8 生成 2026-08-11</p>
       // HASHIRA報告 2026-08-13「youtubeは頭だし押したら再生されるのに、vimeoは最初のみ
       // 頭出し後に再生ボタンを押さなくてはいけない」
       pendingPaidPlay = (ver === 'paid') ? t : null;
+      // v0.10.8b: プレイヤーを作り直すたびにミュート解除の2段目を復活させる（ZA検査2026-08-13）。
+      // フラグを立てっぱなしにすると、有料タブへ戻ったときの再読込で解除の再送が効かない
+      if (ver === 'paid') unmutedOnce = false;
       frame.src = srcFor(ver, t);
       current = ver;
     }
