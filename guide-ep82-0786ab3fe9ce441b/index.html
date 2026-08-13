@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第82回 クラーベと現代の音楽 — 文化の壁を超えるリズムの感じ方 ２ — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.6（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.7（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=HsTe9c5YjEE(2583s) / 有料=vimeo 1216639496(3460s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -471,7 +471,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第82回）/ v0.10.6 生成 2026-08-11</p>
+Mubo 会員ガイド（第82回）/ v0.10.7 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "HsTe9c5YjEE", "vimeo": "1216639496", "vimeoH": "7fc1a257d7", "chFree": [8, 388, 537, 565, 690, 815, 862, 1013, 1150, 1408, 1657, 1807, 2008, 2238], "chPaid": [0, 33, 219, 463, 676, 763, 1285, 1355, 1467, 1687, 1795, 1913, 1948, 2410, 2509, 2600, 2831, 2939, 3206]};</script>
 <script>
@@ -580,6 +580,10 @@ Mubo 会員ガイド（第82回）/ v0.10.6 生成 2026-08-11</p>
         markNow('paid', d.data.seconds);
       } else if (d.event === 'ready'){
         subscribeVimeo();
+        // 再生予約の消化は **ready を受け取ったときだけ**（ZA検査2026-08-13の指摘）。
+        // 読み込み後のリトライタイマー（300/1200/3000ms）で消化すると、プレイヤーがまだ
+        // 受信できない時刻に送った play が黙って捨てられ、予約だけ消えて「再生されない」が再発する
+        flushPaidPlay();
       }
     }
   });
@@ -597,7 +601,6 @@ Mubo 会員ガイド（第82回）/ v0.10.6 生成 2026-08-11</p>
                                         'https://player.vimeo.com');
       });
       unmuteVimeo();
-      flushPaidPlay();
     } catch(e){}
   }
   // v0.10.6: 章の秒をクリックして有料版を**開いた1回目**の再生予約を消化する。
