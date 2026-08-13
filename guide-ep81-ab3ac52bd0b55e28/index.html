@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第81回 ハービー・ハンコックの不思議なコード（オーギュメンテッド5） — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.3（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.4（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=huG0zgTE6KI(1042s) / 有料=vimeo 1115649817(2326s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -374,7 +374,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第81回）/ v0.10.3 生成 2026-08-11</p>
+Mubo 会員ガイド（第81回）/ v0.10.4 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "huG0zgTE6KI", "vimeo": "1115649817", "vimeoH": "bcfcfac4e7", "chFree": [0, 79, 131, 222, 572, 685, 873], "chPaid": [0, 267, 550, 730, 788, 1030, 1589, 1886, 2046]};</script>
 <script>
@@ -404,6 +404,7 @@ Mubo 会員ガイド（第81回）/ v0.10.3 生成 2026-08-11</p>
     t = Math.max(0, Math.floor(t || 0));
     if (ver === current && ver === 'paid'){
       // Vimeoは#t=だけ変えても再読込されないため、プレイヤーへ直接シーク命令を送る
+      unmuteVimeo();  // ミュートのまま頭出しされないように、シークのたびに解除する
       frame.contentWindow.postMessage(JSON.stringify({method:'setCurrentTime', value:t}), 'https://player.vimeo.com');
       frame.contentWindow.postMessage(JSON.stringify({method:'play'}), 'https://player.vimeo.com');
     } else if (ver === current && ver === 'free'){
@@ -492,6 +493,16 @@ Mubo 会員ガイド（第81回）/ v0.10.3 生成 2026-08-11</p>
         frame.contentWindow.postMessage(JSON.stringify({method:'addEventListener', value:evName}),
                                         'https://player.vimeo.com');
       });
+      unmuteVimeo();
+    } catch(e){}
+  }
+  // v0.10.4: 有料版が**ミュート状態で始まり、毎回手で解除する必要があった**（HASHIRA報告）。
+  // 一度ミュートになるとプレイヤーがその状態を保持するため、読み込み時とシーク時に明示的に解除して
+  // 無料版（YouTube）と挙動を揃える。音量は触らない（視聴者が下げた音量を勝手に戻さない）
+  function unmuteVimeo(){
+    try {
+      frame.contentWindow.postMessage(JSON.stringify({method:'setMuted', value:false}),
+                                      'https://player.vimeo.com');
     } catch(e){}
   }
   frame.addEventListener('load', function(){
