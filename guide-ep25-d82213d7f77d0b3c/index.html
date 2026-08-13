@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第25回 モードを簡単な3ステップで理解する — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.10（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.11（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=xdXt_bJHQm8(1276s) / 有料=vimeo 777668529(884s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -423,7 +423,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第25回）/ v0.10.10 生成 2026-08-11</p>
+Mubo 会員ガイド（第25回）/ v0.10.11 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "xdXt_bJHQm8", "vimeo": "777668529", "vimeoH": "b162a17a76", "chFree": [0, 44, 104, 150, 183, 304, 452, 593, 659, 789, 857, 948, 1015, 1110, 1193], "chPaid": [13, 73, 184, 251, 306, 429, 529, 631, 723, 781, 846]};</script>
 <script>
@@ -468,6 +468,7 @@ Mubo 会員ガイド（第25回）/ v0.10.10 生成 2026-08-11</p>
       frame.contentWindow.postMessage(JSON.stringify({method:'setCurrentTime', value:t}), 'https://player.vimeo.com');
       frame.contentWindow.postMessage(JSON.stringify({method:'play'}), 'https://player.vimeo.com');
     } else if (ver === current && ver === 'free'){
+      if (!freeReady) pendingFreePlay = t;   // v0.10.11: 準備前の送信は捨てられるので予約を最新へ
       // v0.9.9: YouTubeも**再読込せず**シーク命令を送る（HASHIRA報告: スマホで頭出しのたびに再生が止まる）。
       // 原因=src差し替えはiframeを読み込み直すため、モバイルの自動再生ポリシーで autoplay=1 が無効化される
       //（ユーザー操作の文脈が新しいドキュメントに引き継がれない）。IFrame APIの seekTo なら同じ
@@ -487,6 +488,7 @@ Mubo 会員ガイド（第25回）/ v0.10.10 生成 2026-08-11</p>
       // v0.10.8b: プレイヤーを作り直すたびにミュート解除の2段目を復活させる（ZA検査2026-08-13）。
       // フラグを立てっぱなしにすると、有料タブへ戻ったときの再読込で解除の再送が効かない
       if (ver === 'paid') { unmutedOnce = false; paidReady = false; }
+      else { freeReady = false; pendingFreePlay = t; }   // v0.10.11: 無料側も同じ扱い
       frame.src = srcFor(ver, t);
       current = ver;
     }
@@ -537,6 +539,8 @@ Mubo 会員ガイド（第25回）/ v0.10.10 生成 2026-08-11</p>
     if (typeof d === 'string'){ try { d = JSON.parse(d); } catch(e){ return; } }
     if (!d || typeof d !== 'object') return;
     if (ev.origin === 'https://www.youtube.com'){
+      // v0.10.11: 何らかのメッセージが届いた＝プレイヤーが受信できる状態。予約を1回だけ消化する
+      if (current === 'free'){ freeReady = true; flushFreePlay(); }
       if (d.event === 'infoDelivery' && d.info && typeof d.info.currentTime === 'number' && current === 'free'){
         markNow('free', d.info.currentTime);
       }
@@ -577,7 +581,25 @@ Mubo 会員ガイド（第25回）/ v0.10.10 生成 2026-08-11</p>
   // v0.10.6: 章の秒をクリックして有料版を**開いた1回目**の再生予約を消化する。
   // 秒は src の #t= で既に入っているが、読み込み直後は無視されることがあるので念のため送り直し、
   // そのうえで play を送る。予約は1回で捨てる（以降の章送りは seek() の postMessage 経路）
+  function flushFreePlay(){
+    if (typeof pendingFreePlay !== 'number' || current !== 'free') return;
+    var t = pendingFreePlay;
+    pendingFreePlay = null;
+    try {
+      subscribeYT();
+      frame.contentWindow.postMessage(JSON.stringify(
+        {event:'command', func:'seekTo', args:[t, true]}), 'https://www.youtube.com');
+      frame.contentWindow.postMessage(JSON.stringify(
+        {event:'command', func:'playVideo', args:[]}), 'https://www.youtube.com');
+    } catch(e){}
+  }
   var pendingPaidPlay = null;
+  // v0.10.11: 無料側（YouTube）にも同じ予約を持たせる（ZA検査2026-08-13の指摘）。
+  // 無料タブへ切り替えた直後（iframeがまだ受信できない間）に別の章を押すと、
+  // seekTo が黙って捨てられ、**最初にクリックした章のまま再生される**（有料側と同型。
+  // しかも無料側には拾い直す仕組みが無かったので、そのまま気づけない）
+  var pendingFreePlay = null;
+  var freeReady = false;
   var unmutedOnce = false;   // v0.10.8: 再生開始後の解除を1回だけ送るためのフラグ
   var paidReady = false;     // v0.10.10: 有料プレイヤーが ready を返したか（返す前の送信は捨てられる）
   function flushPaidPlay(){
