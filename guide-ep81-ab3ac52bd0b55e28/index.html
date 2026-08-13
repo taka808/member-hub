@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第81回 ハービー・ハンコックの不思議なコード（オーギュメンテッド5） — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.7（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.8（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=huG0zgTE6KI(1042s) / 有料=vimeo 1115649817(2326s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -374,7 +374,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第81回）/ v0.10.7 生成 2026-08-11</p>
+Mubo 会員ガイド（第81回）/ v0.10.8 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "huG0zgTE6KI", "vimeo": "1115649817", "vimeoH": "bcfcfac4e7", "chFree": [0, 79, 131, 222, 572, 685, 873], "chPaid": [0, 267, 550, 730, 788, 1030, 1589, 1886, 2046]};</script>
 <script>
@@ -394,7 +394,14 @@ Mubo 会員ガイド（第81回）/ v0.10.7 生成 2026-08-11</p>
     // ブラウザは音ありの自動再生を許さないため、autoplayを頼むとプレイヤーが**ミュートで**再生を始める。
     // 読み込み時は止めておき、視聴者が一度タップして再生する＝そのタップが音の許可になる。
     // 以降の章送りは postMessage（setCurrentTime+play）なので、音が付いたまま頭出しできる
-    return 'https://player.vimeo.com/video/' + cfg.vimeo + '?h=' + cfg.vimeoH + '&playsinline=1#t=' + t + 's';
+    // v0.10.8: autoplay=1 を**戻す**（HASHIRA報告 2026-08-13「Vimeo最初だけ、再生になるが止まる。
+    // 一回手作業で再生すると、そのあとはyoutubeと同じ挙動になる」）。
+    // 理由: 親ページのクリックという操作の文脈は、別ドメインのiframeの中まで自動では引き継がれない。
+    // src に autoplay を書いておくと iframe の allow="autoplay" 経由で再生が許可されるが、
+    // postMessage の play だけでは「始まってすぐ止まる」になる。これがYouTube側との差だった。
+    // v0.10.3 で外したのは「Vimeoが autoplay を頼まれるとミュートで始める」ためだが、
+    // v0.10.4 以降は ready 直後に setMuted(false) を送っているので、ミュートのままにはならない
+    return 'https://player.vimeo.com/video/' + cfg.vimeo + '?h=' + cfg.vimeoH + '&playsinline=1&autoplay=1#t=' + t + 's';
   }
   function activate(ver){
     tabs.forEach(function(b){ b.classList.toggle('active', b.dataset.ver === ver); });
@@ -480,6 +487,10 @@ Mubo 会員ガイド（第81回）/ v0.10.7 生成 2026-08-11</p>
     } else if (ev.origin === 'https://player.vimeo.com'){
       if ((d.event === 'timeupdate' || d.event === 'playProgress') && d.data &&
           typeof d.data.seconds === 'number' && current === 'paid'){
+        // v0.10.8: 再生が実際に動き出した最初の1回だけ、ミュート解除を送り直す。
+        // autoplay で始まるとVimeoはミュートで再生を始めることがあり、ready時の解除だけでは
+        // プレイヤー側の初期化に間に合わないことがあるため（音量には触らない）
+        if (!unmutedOnce){ unmutedOnce = true; unmuteVimeo(); }
         markNow('paid', d.data.seconds);
       } else if (d.event === 'ready'){
         subscribeVimeo();
@@ -510,6 +521,7 @@ Mubo 会員ガイド（第81回）/ v0.10.7 生成 2026-08-11</p>
   // 秒は src の #t= で既に入っているが、読み込み直後は無視されることがあるので念のため送り直し、
   // そのうえで play を送る。予約は1回で捨てる（以降の章送りは seek() の postMessage 経路）
   var pendingPaidPlay = null;
+  var unmutedOnce = false;   // v0.10.8: 再生開始後の解除を1回だけ送るためのフラグ
   function flushPaidPlay(){
     // 未設定は undefined（var の巻き上げ）なので、数値であることを条件にする（null 比較だけだと素通りする）
     if (typeof pendingPaidPlay !== 'number' || current !== 'paid') return;
