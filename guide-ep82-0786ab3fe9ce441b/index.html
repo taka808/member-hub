@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第82回 クラーベと現代の音楽 — 文化の壁を超えるリズムの感じ方 ２ — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.5（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.6（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=HsTe9c5YjEE(2583s) / 有料=vimeo 1216639496(3460s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -471,7 +471,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第82回）/ v0.10.5 生成 2026-08-11</p>
+Mubo 会員ガイド（第82回）/ v0.10.6 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "HsTe9c5YjEE", "vimeo": "1216639496", "vimeoH": "7fc1a257d7", "chFree": [8, 388, 537, 565, 690, 815, 862, 1013, 1150, 1408, 1657, 1807, 2008, 2238], "chPaid": [0, 33, 219, 463, 676, 763, 1285, 1355, 1467, 1687, 1795, 1913, 1948, 2410, 2509, 2600, 2831, 2939, 3206]};</script>
 <script>
@@ -515,6 +515,12 @@ Mubo 会員ガイド（第82回）/ v0.10.5 生成 2026-08-11</p>
       frame.contentWindow.postMessage(JSON.stringify(
         {event:'command', func:'playVideo', args:[]}), 'https://www.youtube.com');
     } else {
+      // v0.10.6: 有料版は src に autoplay を付けない（付けるとブラウザがミュート再生に落とす・v0.10.3）。
+      // その代わり「読み込みが終わったら再生する」という予約を残し、ready 後に play を送る。
+      // これで**最初の1回も再生ボタンを押さずに始まり**、音は付いたまま（無料版のYouTubeと同じ挙動）。
+      // HASHIRA報告 2026-08-13「youtubeは頭だし押したら再生されるのに、vimeoは最初のみ
+      // 頭出し後に再生ボタンを押さなくてはいけない」
+      pendingPaidPlay = (ver === 'paid') ? t : null;
       frame.src = srcFor(ver, t);
       current = ver;
     }
@@ -591,6 +597,21 @@ Mubo 会員ガイド（第82回）/ v0.10.5 生成 2026-08-11</p>
                                         'https://player.vimeo.com');
       });
       unmuteVimeo();
+      flushPaidPlay();
+    } catch(e){}
+  }
+  // v0.10.6: 章の秒をクリックして有料版を**開いた1回目**の再生予約を消化する。
+  // 秒は src の #t= で既に入っているが、読み込み直後は無視されることがあるので念のため送り直し、
+  // そのうえで play を送る。予約は1回で捨てる（以降の章送りは seek() の postMessage 経路）
+  var pendingPaidPlay = null;
+  function flushPaidPlay(){
+    // 未設定は undefined（var の巻き上げ）なので、数値であることを条件にする（null 比較だけだと素通りする）
+    if (typeof pendingPaidPlay !== 'number' || current !== 'paid') return;
+    var t = pendingPaidPlay;
+    pendingPaidPlay = null;
+    try {
+      frame.contentWindow.postMessage(JSON.stringify({method:'setCurrentTime', value:t}), 'https://player.vimeo.com');
+      frame.contentWindow.postMessage(JSON.stringify({method:'play'}), 'https://player.vimeo.com');
     } catch(e){}
   }
   // v0.10.4: 有料版が**ミュート状態で始まり、毎回手で解除する必要があった**（HASHIRA報告）。
