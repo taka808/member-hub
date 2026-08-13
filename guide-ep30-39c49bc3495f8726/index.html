@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>第30回 キーを自由に行き来するゴスペル和音 — Mubo 会員ガイド</title>
-<!-- 生成: member_guide v0.10.1（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
+<!-- 生成: member_guide v0.10.2（SPEC: 12_プロジェクト/Mubo/automation/member_guide/SPEC.md）
      時刻基準: 無料=mmYUeyEmbCs(830s) / 有料=vimeo 777679976(868s)
      注意: 有料版プレイヤーはVimeoホワイトリスト（mubo.taka808.com / localhost）上でのみ再生される -->
 <style>
@@ -353,7 +353,7 @@ main{container-type:inline-size; container-name:guide;}
 </div>
 
 <p class="foot">🔒（有料版）の再生はMubo会員ページ上で有効です（Vimeoのドメイン制限のため、このファイルを直接開いた場合は有料プレイヤーが再生できないことがあります）。<br>
-Mubo 会員ガイド（第30回）/ v0.10.1 生成 2026-08-11</p>
+Mubo 会員ガイド（第30回）/ v0.10.2 生成 2026-08-11</p>
 </main>
 <script>window.GUIDE_CFG = {"yt": "mmYUeyEmbCs", "vimeo": "777679976", "vimeoH": "0cc0da3c25", "chFree": [0, 37, 143, 453, 568, 759], "chPaid": [0, 136, 286, 427, 578, 856]};</script>
 <script>
@@ -366,7 +366,10 @@ Mubo 会員ガイド（第30回）/ v0.10.1 生成 2026-08-11</p>
     if (ver === 'free'){
       return 'https://www.youtube.com/embed/' + cfg.yt + '?start=' + t + '&autoplay=1&rel=0&enablejsapi=1&playsinline=1&origin=' + encodeURIComponent(location.origin);
     }
-    return 'https://player.vimeo.com/video/' + cfg.vimeo + '?h=' + cfg.vimeoH + '&autoplay=1#t=' + t + 's';
+    // v0.10.2: Vimeoにも playsinline=1 が要る。無いと iOS はネイティブの全画面プレイヤーで開き、
+    // 親ページからの postMessage シークが効かなくなる（HASHIRA報告「スマホでVimeoの頭出しができなくなった」）。
+    // v0.9.10でYouTubeにだけ付けたため、有料タブだけ取り残されていた
+    return 'https://player.vimeo.com/video/' + cfg.vimeo + '?h=' + cfg.vimeoH + '&autoplay=1&playsinline=1#t=' + t + 's';
   }
   function activate(ver){
     tabs.forEach(function(b){ b.classList.toggle('active', b.dataset.ver === ver); });
